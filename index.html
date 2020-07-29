@@ -9,6 +9,7 @@
     <script src="https://api.mapbox.com/mapbox-gl-js/v1.10.0/mapbox-gl.js"></script>
     <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.5.1/mapbox-gl-geocoder.min.js"></script>
     <script src="https://github.com/mapbox-gl-indoor/mapbox-gl-indoor/releases/download/0.0.4-rc1/mapbox-gl-indoor.js"></script>
+    <script src="https://unpkg.com/osmtogeojson@2.2.12/osmtogeojson.js"></script>
 
     <link href="https://api.mapbox.com/mapbox-gl-js/v1.10.0/mapbox-gl.css" rel="stylesheet" />
     <link rel="stylesheet"
@@ -27,13 +28,39 @@
             left: 0;
             bottom: 0;
         }
+        #search {
+            position: fixed;
+            z-index: 9;
+            width: 100%;
+        }
+        #search > button {
+            padding: 5px;
+            background: rebeccapurple;
+            color: wheat;
+        }
+
     </style>
 </head>
 
 <body>
+    <div id="search">
+        <textarea type="text" name="" style="width: 619px; margin: 0px; height: 55px;" placeholder="Enter Overpass Query"></textarea>
+        <button onclick='search();'>Search Indoor Building</button>
+    </div>
     <div id="map"></div>
 
     <script>
+
+    function buildOverpassApiUrl(map, overpassQuery) {
+        var bounds = map.getBounds().getSouth() + ',' + map.getBounds().getWest() + ',' + map.getBounds().getNorth() + ',' + map.getBounds().getEast();
+
+        let query = overpassQuery.replace('BOUNDS',bounds);
+
+        var resultUrl = `http://overpass-api.de/api/interpreter?data=${query}`;
+        console.log("query url",resultUrl);
+        return resultUrl;
+      }
+
         mapboxgl.accessToken = 'pk.eyJ1IjoiY2xlbWVudGlnb25ldCIsImEiOiJjazl2Z2hzcmkwYmF6M21zN3RqcHg5anU4In0.blXhwZzYBGSm6fJe0z0e-Q'
         const map = window.map = new mapboxgl.Map({
             container: "map",
@@ -54,13 +81,20 @@
         var customData;
 
         // Retrieve the geojson from the path and add the map
-        fetch('https://raw.githubusercontent.com/openindoor-space/openindoor-space.github.io/master/gare-de-l-est.geojson')
+        // fetch('https://raw.githubusercontent.com/openindoor-space/openindoor-space.github.io/master/gare-de-l-est.geojson')
+        // Query
+        function search(){
+            let query = document.getElementById('search').getElementsByTagName('textarea')[0].value;
+            fetch(buildOverpassApiUrl(map,query))
             .then(res => res.json())
-            .then(geojson => {
+            .then(osmjson => {
+                window.osmjson = osmjson;
+                let geojson = osmtogeojson(osmjson);
+                // let geojson = osmjson;
                 indoor.addMap(mapboxgl_indoor.IndoorMap.fromGeojson(geojson));
                 customData = geojson;
             });
-
+        } 
             function forwardGeocoder(query) {
             var matchingFeatures = [];
 
