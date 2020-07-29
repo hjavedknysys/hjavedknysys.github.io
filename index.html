@@ -56,7 +56,7 @@
 
         let query = overpassQuery.replace('BOUNDS',bounds);
 
-        var resultUrl = `http://overpass-api.de/api/interpreter?data=${query}`;
+        var resultUrl = `https://overpass-api.de/api/interpreter?data=[out:json][timeout:15];${query}`;
         console.log("query url",resultUrl);
         return resultUrl;
       }
