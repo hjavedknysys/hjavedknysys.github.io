@@ -51,6 +51,25 @@
 
     <script>
 
+    function addSource(geojson){
+        let osmgeojson = {type : null , data : null};
+        osmgeojson.type = "geojson";
+        osmgeojson.data = geojson;
+        console.log("geojson", geojson);
+        console.log("geojson", osmgeojson);
+        map.addSource('maine', osmgeojson);
+        map.addLayer({
+        'id': 'maine',
+        'type': 'fill',
+        'source': 'maine',
+        'layout': {},
+        'paint': {
+        'fill-color': '#088',
+        'fill-opacity': 0.8
+        }
+        });
+    }
+
     function buildOverpassApiUrl(map, overpassQuery) {
         var bounds = map.getBounds().getSouth() + ',' + map.getBounds().getWest() + ',' + map.getBounds().getNorth() + ',' + map.getBounds().getEast();
 
@@ -58,6 +77,10 @@
 
         var resultUrl = `https://overpass-api.de/api/interpreter?data=[out:json][timeout:15];${query}`;
         console.log("query url",resultUrl);
+
+        // resultUrl = resultUrl.replace(/\n\r\t/,"");
+        resultUrl = encodeURI(resultUrl);
+
         return resultUrl;
       }
 
@@ -91,9 +114,10 @@
                 window.osmjson = osmjson;
                 let geojson = osmtogeojson(osmjson);
                 // let geojson = osmjson;
-                indoor.addMap(mapboxgl_indoor.IndoorMap.fromGeojson(geojson));
+                // indoor.addMap(mapboxgl_indoor.IndoorMap.fromGeojson(geojson));
+                addSource(geojson);
                 customData = geojson;
-            });
+            }).catch(e=>console.error(e));
         } 
             function forwardGeocoder(query) {
             var matchingFeatures = [];
