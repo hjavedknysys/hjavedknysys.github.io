@@ -1,0 +1,12 @@
+node
+(BOUNDS); // string BOUNDS will replace by current map view bounds
+out:
+
+
+
+(
+   node(BOUNDS);
+   indoor=*
+   <;
+);
+out meta;

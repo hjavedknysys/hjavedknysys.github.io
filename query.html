@@ -38,25 +38,18 @@
             background: rebeccapurple;
             color: wheat;
         }
-        #logs{
-            position: fixed;
-            z-index: 9;
-            background: #b19494;
-            color: white;
-            padding: 5px; 
-        }
 
     </style>
 </head>
 
 <body>
-    <div id="logs"></div>
+    <div id="search">
+        <textarea type="text" name="" style="width: 619px; margin: 0px; height: 55px;" placeholder="Enter Overpass Query"></textarea>
+        <button onclick='search();'>Search Indoor Building</button>
+    </div>
     <div id="map"></div>
 
     <script>
-
-    var queryStack = [];
-    var maploaded = false;
 
     function addSource(geojson){
         let osmgeojson = {type : null , data : null};
@@ -64,15 +57,7 @@
         osmgeojson.data = geojson;
         console.log("geojson", geojson);
         console.log("geojson", osmgeojson);
-        try{
-            map.removeLayer('maine');
-            map.removeSource('maine');
-        }catch(e){
-            console.error(e);
-        }finally{
-            map.addSource('maine', osmgeojson);
-            info("Data is showing on map");
-        }
+        map.addSource('maine', osmgeojson);
         map.addLayer({
         'id': 'maine',
         'type': 'fill',
@@ -83,26 +68,6 @@
         'fill-opacity': 0.8
         }
         });
-    }
-
-    function info(str){
-        let logsDiv = document.getElementById('logs');
-        logsDiv.innerText = str; 
-    }
-
-    function getQuery(){
-        return `
-            (
-               node(BOUNDS);
-               <;
-            );
-            out meta;
-        `;
-    }
-    function showOsmData(){
-        let queryStr = getQuery();
-        let query = search(queryStr);
-        queryStack.push(query);
     }
 
     function buildOverpassApiUrl(map, overpassQuery) {
@@ -141,14 +106,10 @@
         // Retrieve the geojson from the path and add the map
         // fetch('https://raw.githubusercontent.com/openindoor-space/openindoor-space.github.io/master/gare-de-l-est.geojson')
         // Query
-        function search(query){
-            // let query = document.getElementById('search').getElementsByTagName('textarea')[0].value;
-            let controller = new AbortController();
-            let signal = controller.signal;
-            info("Data is loading");
-            fetch(buildOverpassApiUrl(map,query),{signal})
+        function search(){
+            let query = document.getElementById('search').getElementsByTagName('textarea')[0].value;
+            fetch(buildOverpassApiUrl(map,query))
             .then(res => {
-                info("Data has been loaded");
                if(res.status != 200){
                     alert(res.status+" : "+res.statusText);
                }
@@ -162,7 +123,6 @@
                 addSource(geojson);
                 customData = geojson;
             }).catch(e=>console.error(e));
-            return controller;
         } 
             function forwardGeocoder(query) {
             var matchingFeatures = [];
@@ -210,28 +170,6 @@
 
         // Add the specific control
         map.addControl(new mapboxgl_indoor.IndoorControl(indoor), 'top-right');
-
-        map.on('movestart', function(e) {
-            while(queryStack.length){
-                let query = queryStack.pop();
-                query.abort();
-                console.log("query cancel");
-                info("");
-            }
-        });
-
-        map.on('moveend', function(e) {
-            showOsmData();
-        });
-
-        map.on('sourcedata', function(e) {
-            if (e.isSourceLoaded) {
-                if(!maploaded){
-                    showOsmData();
-                    maploaded = true;
-                }
-            }
-        });
 
     </script>
 
